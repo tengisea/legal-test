@@ -4,7 +4,6 @@ import {
   LiveKitRoom,
   VideoConference,
   useChat,
-  useToken,
   useLocalParticipant,
 } from "@livekit/components-react";
 import "@livekit/components-styles";
@@ -19,18 +18,16 @@ export default function LiveRoom({ token }: { token: string }) {
       connect
       data-lk-theme="default"
       style={{ height: "100vh" }}>
-      <div className="flex h-full w-full relative">
-        {/* Видео дуудлага */}
-        <div className="flex-1 bg-white">
-          <div className="h-full w-full p-4">
-            <VideoConference className="rounded-2xl border border-neutral-700 shadow-xl overflow-hidden" />
-          </div>
+      <div className="flex h-full w-full bg-gray-100 dark:bg-neutral-900">
+        {/* Видео хэсэг */}
+        <div className="flex-1 p-4">
+          <VideoConference className="rounded-2xl border border-neutral-300 dark:border-neutral-700 shadow-xl h-full w-full" />
         </div>
 
-        {/* Чат */}
-        <div className="w-96 bg-white dark:bg-neutral-900 border-l border-gray-300 dark:border-neutral-800 flex flex-col">
+        {/* Чат хэсэг */}
+        <aside className="w-[400px] bg-white dark:bg-neutral-800 border-l border-gray-300 dark:border-neutral-700 flex flex-col">
           <Chat />
-        </div>
+        </aside>
       </div>
     </LiveKitRoom>
   );
@@ -43,27 +40,30 @@ function Chat() {
   const { localParticipant } = useLocalParticipant();
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth",
+    });
   }, [chatMessages]);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSending || !msg.trim()) return;
+    if (!msg.trim() || isSending) return;
     send(msg);
     setMsg("");
   };
 
   return (
     <div className="h-full flex flex-col p-4">
-      <h2 className="text-lg font-bold mb-3 text-gray-900 dark:text-white">
+      {/* Чатын гарчиг */}
+      <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
         💬 Consultation Chat
       </h2>
 
+      {/* Чат мессежүүд */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto space-y-2 pr-2 mb-4 scroll-smooth scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 dark:scrollbar-thumb-neutral-700 dark:scrollbar-track-neutral-800">
+        className="flex-1 overflow-y-auto space-y-3 pr-2 mb-4 scroll-smooth scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 dark:scrollbar-thumb-neutral-600 dark:scrollbar-track-neutral-700">
         {chatMessages.map((m, i) => {
           const isLocal = m.from?.identity === localParticipant.identity;
           return (
@@ -75,26 +75,27 @@ function Chat() {
               )}>
               <div
                 className={clsx(
-                  "max-w-xs px-4 py-2 rounded-2xl text-sm shadow",
+                  "max-w-[80%] px-4 py-2 rounded-xl text-sm shadow-md",
                   isLocal
-                    ? "bg-blue-600 text-white rounded-br-sm"
-                    : "bg-gray-100 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 rounded-bl-sm"
+                    ? "bg-blue-600 text-white rounded-br-none"
+                    : "bg-gray-200 dark:bg-neutral-700 text-gray-900 dark:text-gray-100 rounded-bl-none"
                 )}>
-                <span className="block font-medium mb-1 text-xs text-gray-200 dark:text-gray-400">
-                  {m.from?.name || "Unknown"}
-                </span>
-                <span>{m.message}</span>
+                <p className="text-[11px] mb-1 font-semibold text-gray-100 dark:text-gray-300">
+                  {m.from?.name || "Anonymous"}
+                </p>
+                <p>{m.message}</p>
               </div>
             </div>
           );
         })}
       </div>
 
-      <form onSubmit={handleSend} className="flex gap-2">
+      {/* Илгээх хэсэг */}
+      <form onSubmit={handleSend} className="flex items-center gap-2 mt-auto">
         <input
           value={msg}
           onChange={(e) => setMsg(e.target.value)}
-          className="flex-1 rounded-full border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-4 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 rounded-full border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 px-4 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Type your message..."
         />
         <button
