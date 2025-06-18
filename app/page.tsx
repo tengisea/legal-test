@@ -1,7 +1,7 @@
+import ChatInterface from "./components/ChatInterface";
 import LiveRoom from "./room/[room]/LiveRoom";
 
 export default async function Page() {
-  // API-д fetch хийж token авна
   const res = await fetch(
     `http://localhost:3000/api/livekit-token?userId=user123&room=lawyer-room`
   );
@@ -17,7 +17,13 @@ export default async function Page() {
     console.error("No token received");
     return <div>No token received</div>;
   }
-console.log("toooookeeeen", data.token);
 
-  return <LiveRoom token={data.token} />;
+  return (
+    <div>
+      <LiveRoom token={data.token} />
+      <div className="h-screen">
+        <ChatInterface/>
+      </div>
+    </div>
+  );
 }
