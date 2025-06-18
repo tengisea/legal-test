@@ -1,5 +1,4 @@
 import ChatInterface from "./components/ChatInterface";
-import LiveRoom from "./room/[room]/LiveRoom";
 
 export default async function Page() {
   const res = await fetch(
@@ -20,9 +19,8 @@ export default async function Page() {
 
   return (
     <div>
-      <LiveRoom token={data.token} />
       <div className="h-screen">
-        <ChatInterface/>
+        <ChatInterface token={data.token} />
       </div>
     </div>
   );

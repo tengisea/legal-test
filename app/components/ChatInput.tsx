@@ -1,104 +1,70 @@
 "use client";
-import React, { useState, useRef } from 'react';
-import { Send, Paperclip, Video, PhoneCall } from 'lucide-react';
 
-interface ChatInputProps {
-  onSendMessage: (message: string) => void;
-  onFileUpload: (file: File) => void;
-  onVideoCall: () => void;
-  onAudioCall: () => void;
+import { Paperclip } from "lucide-react";
+import React, { useState, useRef } from "react";
+
+interface Props {
+  onSend: (msg: string) => void;
+  onFileChange: (file: File | null) => void;
+  isSending: boolean;
 }
 
-export const ChatInput: React.FC<ChatInputProps> = ({
-  onSendMessage,
-  onFileUpload,
-  onVideoCall,
-  onAudioCall
-}) => {
-  const [message, setMessage] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+const ChatInput: React.FC<Props> = ({ onSend, onFileChange, isSending }) => {
+  const [msg, setMsg] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim()) {
-      onSendMessage(message);
-      setMessage('');
-    }
+    if (!msg.trim()) return;
+    onSend(msg.trim());
+    setMsg("");
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onFileUpload(file);
-    }
-  };
-
-  const handleAttachClick = () => {
+  const handleFileIconClick = () => {
     fileInputRef.current?.click();
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    onFileChange(file);
+    e.target.value = "";
+  };
+
   return (
-    <div className="bg-white border-t border-slate-200 px-6 py-4">
-      <form onSubmit={handleSubmit} className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2">
-          <button
-            type="button"
-            onClick={handleAttachClick}
-            className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors duration-200"
-            title="Attach file"
-          >
-            <Paperclip className="w-5 h-5" />
-          </button>
-          
-          <button
-            type="button"
-            onClick={onAudioCall}
-            className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors duration-200"
-            title="Start audio call"
-          >
-            <PhoneCall className="w-5 h-5" />
-          </button>
-          
-          <button
-            type="button"
-            onClick={onVideoCall}
-            className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors duration-200"
-            title="Start video call"
-          >
-            <Video className="w-5 h-5" />
-          </button>
-        </div>
+    <form
+      onSubmit={handleSubmit}
+      className="flex items-center gap-2 p-2">
+      <button
+        type="button"
+        onClick={handleFileIconClick}
+        title="Attach file"
+        className="text-xl text-gray-500 hover:text-blue-600 transition">
+        <Paperclip/>
+      </button>
+      <input
+        type="file"
+        ref={fileInputRef}
+        hidden
+        accept="image/*,audio/*,application/*"
+        onChange={handleFileChange}
+      />
 
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Type your message..."
-            className="w-full px-4 py-3 pr-12 bg-slate-50 border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-          />
-          
-          <button
-            type="submit"
-            disabled={!message.trim()}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-full transition-colors duration-200"
-          >
-            <Send className="w-4 h-4" />
-          </button>
-        </div>
+      <input
+        value={msg}
+        onChange={(e) => setMsg(e.target.value)}
+        className="flex-1 rounded-full border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 px-4 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="Type your message..."
+        disabled={isSending}
+      />
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          onChange={handleFileSelect}
-          accept="image/*,video/*,.pdf,.doc,.docx,.txt"
-          className="hidden"
-        />
-      </form>
-      
-      <div className="text-xs text-slate-500 mt-2 text-center">
-        All communications are encrypted and confidential
-      </div>
-    </div>
+      <button
+        type="submit"
+        disabled={!msg.trim() || isSending}
+        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm rounded-full transition disabled:opacity-50">
+        Send
+      </button>
+    </form>
   );
 };
+
+export default ChatInput;

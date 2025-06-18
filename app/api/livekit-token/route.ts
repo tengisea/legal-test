@@ -27,11 +27,7 @@ export async function GET(req: NextRequest) {
     canSubscribe: true,
   });
   
-
-  // ** await here **
   const jwt = await token.toJwt();
-
-  console.log("Generated JWT:", jwt);
 
   return NextResponse.json({ token: jwt });
 }

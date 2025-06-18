@@ -1,92 +1,44 @@
-"use client"
-import React, { useState } from 'react';
-import { MessageList } from './MessageList';
-import { ChatInput } from './ChatInput';
-import { ChatHeader } from './ChatHeader';
-import { VideoCallModal } from './VideoCallModal';
-import { Message, User } from '../types/chat';
+"use client";
 
-const ChatInterface = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: 'Hello! I\'m here to help with your legal consultation. How can I assist you today?',
-      sender: {
-        id: 'lawyer1',
-        name: 'Sarah Johnson',
-        isLawyer: true,
-        avatar: '/placeholder.svg'
-      },
-      timestamp: new Date(Date.now() - 300000),
-      type: 'text'
-    },
-    {
-      id: '2',
-      text: 'Thank you for connecting with me. I have some questions about contract law.',
-      sender: {
-        id: 'client1',
-        name: 'John Smith',
-        isLawyer: false,
-        avatar: '/placeholder.svg'
-      },
-      timestamp: new Date(Date.now() - 240000),
-      type: 'text'
-    }
-  ]);
+import React, { useEffect, useState } from "react";
+import { LiveKitRoom, VideoConference } from "@livekit/components-react";
+import { VideoCallModal } from './VideoCallModal'; // зөв path-тай эсэхийг шалгаарай
 
+import "@livekit/components-styles";
+
+import { ChatHeader } from "./ChatHeader";
+import Chat from "./Chat";
+
+interface ChatInterfaceProps {
+  token: string;
+}
+
+const ChatInterface = ({ token }: ChatInterfaceProps) => {
+  const [livekitToken, setLivekitToken] = useState<string>(token);
+  const [activeCall, setActiveCall] = useState<"video" | "audio" | null>(null);
   const [isVideoCallOpen, setIsVideoCallOpen] = useState(false);
-  const [activeCall, setActiveCall] = useState<'video' | 'audio' | null>(null);
 
-  const currentUser: User = {
-    id: 'client1',
-    name: 'John Smith',
-    isLawyer: false,
-    avatar: '/placeholder.svg'
-  };
+  const currentUserId = "client1";
 
-  const otherUser: User = {
-    id: 'lawyer1',
-    name: 'Sarah Johnson',
-    isLawyer: true,
-    avatar: '/placeholder.svg'
-  };
-
-  const handleSendMessage = (text: string) => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text,
-      sender: currentUser,
-      timestamp: new Date(),
-      type: 'text'
+  useEffect(() => {
+    const fetchToken = async () => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_SITE_URL}/api/livekit-token?userId=${currentUserId}&room=lawyer-room`
+      );
+      const data = await res.json();
+      setLivekitToken(data.token);
     };
-    setMessages(prev => [...prev, newMessage]);
-  };
-
-  const handleFileUpload = (file: File) => {
-    const fileType = file.type.startsWith('image/') ? 'image' : 
-                    file.type.startsWith('video/') ? 'video' : 'document';
-    
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text: `Shared ${file.name}`,
-      sender: currentUser,
-      timestamp: new Date(),
-      type: fileType,
-      fileName: file.name,
-      fileUrl: URL.createObjectURL(file)
-    };
-    setMessages(prev => [...prev, newMessage]);
-  };
+    fetchToken();
+  }, [currentUserId]);
 
   const handleVideoCall = () => {
-    setActiveCall('video');
+    setActiveCall("video");
     setIsVideoCallOpen(true);
   };
 
   const handleAudioCall = () => {
-    setActiveCall('audio');
-    // In a real app, this would initiate an audio call
-    console.log('Starting audio call...');
+    setActiveCall("audio");
+    setIsVideoCallOpen(true);
   };
 
   const handleEndCall = () => {
@@ -94,34 +46,49 @@ const ChatInterface = () => {
     setIsVideoCallOpen(false);
   };
 
-  return (
-    <div className="h-screen bg-slate-50 flex flex-col">
-      <ChatHeader 
-        user={otherUser} 
-        onVideoCall={handleVideoCall}
-        onAudioCall={handleAudioCall}
-        isCallActive={activeCall !== null}
-      />
-      
-      <div className="flex-1 overflow-hidden">
-        <MessageList messages={messages} currentUser={currentUser} />
-      </div>
-      
-      <ChatInput 
-        onSendMessage={handleSendMessage}
-        onFileUpload={handleFileUpload}
-        onVideoCall={handleVideoCall}
-        onAudioCall={handleAudioCall}
-      />
+  if (!livekitToken) return <div>Connecting...</div>;
 
-      {isVideoCallOpen && (
-        <VideoCallModal 
+  const otherUser = {
+    id: "lawyer1",
+    name: "Sarah Johnson",
+    isLawyer: true,
+    avatar: "/placeholder.svg",
+  };
+
+  return (
+    <LiveKitRoom
+      token={livekitToken}
+      serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
+      connect
+      data-lk-theme="default"
+      style={{ height: "100vh" }}>
+      <div className="flex flex-col h-full bg-slate-50">
+        <ChatHeader
           user={otherUser}
+          onVideoCall={handleVideoCall}
+          onAudioCall={handleAudioCall}
+          isCallActive={activeCall !== null}
           onEndCall={handleEndCall}
-          callType={activeCall || 'video'}
         />
-      )}
-    </div>
+
+        <div className="flex-1 flex overflow-hidden flex-col md:flex-row transition-all duration-300">
+          {isVideoCallOpen && activeCall && (
+            <VideoCallModal
+              user={otherUser}
+              callType={activeCall}
+              onEndCall={handleEndCall}
+            />
+          )}
+
+          <div
+            className={`transition-all ${
+              isVideoCallOpen ? "w-full md:w-1/3 h-1/2 md:h-auto" : "w-full"
+            }`}>
+            <Chat />
+          </div>
+        </div>
+      </div>
+    </LiveKitRoom>
   );
 };
 

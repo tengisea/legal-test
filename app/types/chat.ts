@@ -7,11 +7,15 @@ export interface User {
 }
 
 export interface Message {
-  id: string;
   text: string;
-  sender: User;
-  timestamp: Date;
-  type: 'text' | 'image' | 'video' | 'document';
-  fileName?: string;
+  type: "text" | "image" | "video" | "document";
   fileUrl?: string;
+  fileName?: string;
+  timestamp: Date;
+  sender: {
+    id: string;
+    name: string;
+    avatar: string;
+    isLawyer: boolean;
+  };
 }
